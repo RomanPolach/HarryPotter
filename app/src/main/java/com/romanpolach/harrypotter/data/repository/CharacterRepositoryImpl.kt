@@ -1,5 +1,9 @@
 package com.romanpolach.harrypotter.data.repository
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.map
 import com.romanpolach.harrypotter.data.local.dao.CharacterDao
 import com.romanpolach.harrypotter.data.mapper.toDomain
 import com.romanpolach.harrypotter.data.mapper.toEntity
@@ -51,6 +55,33 @@ class CharacterRepositoryImpl(
                 emit(Result.failure(e))
             }
             .flowOn(Dispatchers.IO)
+    }
+    
+    override fun getCharactersPaging(showOnlyFavorites: Boolean): Flow<PagingData<Character>> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = 15,
+                prefetchDistance = 3,
+                initialLoadSize = 15,
+                enablePlaceholders = true
+            ),
+            pagingSourceFactory = {
+                if (showOnlyFavorites) dao.getFavoriteCharactersPaging() else dao.getAllCharactersPaging()
+            }
+        ).flow
+            .map { pagingData ->
+                pagingData.map { it.toDomain() }
+            }
+            .onStart {
+                // Trigger background refresh when flow starts collecting
+                scope.launch {
+                    try {
+                        refreshFromApi()
+                    } catch (e: Exception) {
+                        // Ignore refresh errors
+                    }
+                }
+            }
     }
     
     override fun getCharacterById(id: String): Flow<Result<Character>> {

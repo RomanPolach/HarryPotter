@@ -1,5 +1,6 @@
 package com.romanpolach.harrypotter.domain.repository
 
+import androidx.paging.PagingData
 import com.romanpolach.harrypotter.domain.model.Character
 import kotlinx.coroutines.flow.Flow
 
@@ -14,6 +15,11 @@ interface CharacterRepository {
      * Implements offline-first: emits cached data first, then updates from network.
      */
     fun getCharacters(): Flow<Result<List<Character>>>
+    
+    /**
+     * Get characters with paging support.
+     */
+    fun getCharactersPaging(showOnlyFavorites: Boolean): Flow<PagingData<Character>>
     
     /**
      * Get a single character by ID.

@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.paging.PagingSource
 import com.romanpolach.harrypotter.data.local.entity.CharacterEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -15,6 +16,12 @@ interface CharacterDao {
     
     @Query("SELECT * FROM characters ORDER BY name ASC")
     fun getAllCharacters(): Flow<List<CharacterEntity>>
+    
+    @Query("SELECT * FROM characters ORDER BY name ASC")
+    fun getAllCharactersPaging(): PagingSource<Int, CharacterEntity>
+    
+    @Query("SELECT * FROM characters WHERE isFavorite = 1 ORDER BY name ASC")
+    fun getFavoriteCharactersPaging(): PagingSource<Int, CharacterEntity>
     
     @Query("SELECT * FROM characters WHERE id = :id")
     fun getCharacterById(id: String): Flow<CharacterEntity?>

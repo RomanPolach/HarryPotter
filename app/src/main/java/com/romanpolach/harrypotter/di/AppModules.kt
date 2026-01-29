@@ -9,6 +9,7 @@ import com.romanpolach.harrypotter.domain.usecase.GetCharacterByIdUseCase
 import com.romanpolach.harrypotter.domain.usecase.GetCharactersUseCase
 import com.romanpolach.harrypotter.domain.usecase.RefreshCharactersUseCase
 import com.romanpolach.harrypotter.domain.usecase.ToggleFavoriteUseCase
+import com.romanpolach.harrypotter.domain.usecase.GetCharactersPagingUseCase
 import com.romanpolach.harrypotter.presentation.characterdetail.CharacterDetailViewModel
 import com.romanpolach.harrypotter.presentation.characterlist.CharacterListViewModel
 import io.ktor.client.HttpClient
@@ -78,13 +79,14 @@ val useCaseModule = module {
     factory { GetCharacterByIdUseCase(get()) }
     factory { ToggleFavoriteUseCase(get()) }
     factory { RefreshCharactersUseCase(get()) }
+    factory { GetCharactersPagingUseCase(get()) }
 }
 
 /**
  * ViewModel module
  */
 val viewModelModule = module {
-    viewModel { CharacterListViewModel(get(), get(), get()) }
+    viewModel { CharacterListViewModel(get(), get(), get(), get()) }
     viewModel { (characterId: String) -> CharacterDetailViewModel(characterId, get(), get()) }
 }
 

@@ -1,5 +1,10 @@
 package com.romanpolach.harrypotter.presentation.characterlist
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,7 +19,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemContentType
+import androidx.paging.compose.itemKey
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -70,6 +78,8 @@ fun CharacterListScreen(
     onCharacterClick: (String) -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val effect by viewModel.effect.collectAsStateWithLifecycle(initialValue = null)
+    val pagedCharacters = viewModel.pagingDataFlow.collectAsLazyPagingItems()
     val snackbarHostState = remember { SnackbarHostState() }
     
     val context = LocalContext.current
@@ -137,18 +147,25 @@ fun CharacterListScreen(
             }
             
             when {
-                state.isLoading && state.characters.isEmpty() -> {
+                pagedCharacters.loadState.refresh is LoadState.Loading -> {
                     LoadingState()
                 }
-                state.error != null && state.characters.isEmpty() -> {
-                    val error = state.error
+                pagedCharacters.loadState.refresh is LoadState.Error -> {
+                    val error = pagedCharacters.loadState.refresh as LoadState.Error
                     ErrorState(
-                        message = error?.asString() ?: "",
-                        onRetry = { viewModel.handleIntent(CharacterListContract.Intent.LoadCharacters) }
+                        message = error.error.message ?: stringResource(R.string.error_unknown),
+                        onRetry = { pagedCharacters.retry() }
                     )
                 }
-                state.displayedCharacters.isEmpty() && state.showOnlyFavorites -> {
-                    EmptyFavoritesState()
+                pagedCharacters.itemCount == 0 -> {
+                    if (state.showOnlyFavorites) {
+                        EmptyFavoritesState()
+                    } else {
+                        // Empty state for all characters (unlikely but possible)
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(text = stringResource(R.string.error_no_characters))
+                        }
+                    }
                 }
                 else -> {
                     PullToRefreshBox(
@@ -162,25 +179,27 @@ fun CharacterListScreen(
                             contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp)
                         ) {
                             items(
-                                items = state.displayedCharacters,
-                                key = { it.id }
-                            ) { character ->
-                                CharacterListItem(
-                                    character = character,
-                                    onClick = { 
-                                        viewModel.handleIntent(CharacterListContract.Intent.NavigateToDetail(character.id))
-                                    },
-                                    onFavoriteClick = {
-                                        viewModel.handleIntent(CharacterListContract.Intent.ToggleFavorite(character.id))
-                                    }
-                                )
-                            }
+                                count = pagedCharacters.itemCount,
+                                key = pagedCharacters.itemKey { it.id },
+                                contentType = pagedCharacters.itemContentType { "character" }
+                            ) { index ->
+                                val character = pagedCharacters[index]
+                                if (character != null) {
+                                    CharacterListItem(
+                                        character = character,
+                                        onClick = { viewModel.handleIntent(CharacterListContract.Intent.NavigateToDetail(character.id)) },
+                                        onFavoriteClick = { viewModel.handleIntent(CharacterListContract.Intent.ToggleFavorite(character.id)) }
+                                    )
+                                } else {
+                                    CharacterSkeletonItem()
+                                }
+                            } 
                         }
                     }
                 }
             }
-            }
         }
+    }
     }
 }
 
@@ -308,22 +327,14 @@ private fun HouseBadge(house: String) {
 
 @Composable
 private fun LoadingState() {
-    Box(
+    LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+        userScrollEnabled = false
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            CircularProgressIndicator(
-                color = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = stringResource(R.string.loading_characters),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        items(10) {
+            CharacterSkeletonItem()
         }
     }
 }
@@ -391,6 +402,60 @@ private fun EmptyFavoritesState() {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+    }
+}
+
+@Composable
+private fun CharacterSkeletonItem() {
+    val infiniteTransition = rememberInfiniteTransition(label = "skeleton")
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.7f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "alpha"
+    )
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = alpha)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(72.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
+            )
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            Column(modifier = Modifier.weight(1f)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.6f)
+                        .height(20.dp)
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.4f)
+                        .height(16.dp)
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+                )
+            }
         }
     }
 }

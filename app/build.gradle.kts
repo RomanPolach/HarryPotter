@@ -66,6 +66,7 @@ dependencies {
     // Room
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
+    implementation(libs.room.paging)
     implementation(libs.androidx.navigation3.runtime)
     ksp(libs.room.compiler)
 
@@ -83,8 +84,11 @@ dependencies {
     // Coil
     implementation(libs.coil.compose)
 
-    // Serialization
     implementation(libs.kotlinx.serialization.json)
+
+    // Paging
+    implementation(libs.paging.runtime)
+    implementation(libs.paging.compose)
 
     // Testing
     testImplementation(libs.junit)
