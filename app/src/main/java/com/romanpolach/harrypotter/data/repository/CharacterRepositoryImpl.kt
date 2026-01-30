@@ -72,16 +72,6 @@ class CharacterRepositoryImpl(
             .map { pagingData ->
                 pagingData.map { it.toDomain() }
             }
-            .onStart {
-                // Trigger background refresh when flow starts collecting
-                scope.launch {
-                    try {
-                        refreshFromApi()
-                    } catch (e: Exception) {
-                        // Ignore refresh errors
-                    }
-                }
-            }
     }
     
     override fun getCharacterById(id: String): Flow<Result<Character>> {

@@ -62,10 +62,24 @@ class CharacterListViewModel(
     }
     
     private fun loadCharacters() {
-        // Paging handles loading automatically. 
-        // This method can be used for explicit refresh if needed, 
-        // but currently PullToRefresh handles it.
-        _state.update { it.copy(isLoading = false) }
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, error = null) }
+            
+            refreshCharactersUseCase().fold(
+                onSuccess = {
+                    _state.update { it.copy(isLoading = false) }
+                },
+                onFailure = { error ->
+                    _state.update { 
+                        it.copy(
+                            isLoading = false,
+                            error = error.message?.let { UiText.DynamicString(it) } 
+                                ?: UiText.StringResource(R.string.error_unknown)
+                        )
+                    }
+                }
+            )
+        }
     }
     
     private fun refresh() {

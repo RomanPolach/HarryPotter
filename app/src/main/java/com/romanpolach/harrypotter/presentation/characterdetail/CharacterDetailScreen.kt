@@ -32,9 +32,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -66,14 +69,15 @@ fun CharacterDetailScreen(
     onBackClick: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is CharacterDetailContract.Effect.GoBack -> onBackClick()
                 is CharacterDetailContract.Effect.ShowError -> {
-                    // Handle error - you could use a snackbar here as well
+                    snackbarHostState.showSnackbar(effect.message.asString(context))
                 }
             }
         }
@@ -103,6 +107,7 @@ fun CharacterDetailScreen(
                 )
             },
             containerColor = Color.Transparent,
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             floatingActionButton = {
                 state.character?.let { character ->
                     FloatingActionButton(

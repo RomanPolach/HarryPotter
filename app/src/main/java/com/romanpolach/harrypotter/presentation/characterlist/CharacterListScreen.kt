@@ -78,7 +78,6 @@ fun CharacterListScreen(
     onCharacterClick: (String) -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val effect by viewModel.effect.collectAsStateWithLifecycle(initialValue = null)
     val pagedCharacters = viewModel.pagingDataFlow.collectAsLazyPagingItems()
     val snackbarHostState = remember { SnackbarHostState() }
     
@@ -147,8 +146,14 @@ fun CharacterListScreen(
             }
             
             when {
-                pagedCharacters.loadState.refresh is LoadState.Loading -> {
+                (state.isLoading || pagedCharacters.loadState.refresh is LoadState.Loading) && pagedCharacters.itemCount == 0 -> {
                     LoadingState()
+                }
+                state.error != null && pagedCharacters.itemCount == 0 -> {
+                    ErrorState(
+                        message = state.error?.asString() ?: stringResource(R.string.error_unknown),
+                        onRetry = { viewModel.handleIntent(CharacterListContract.Intent.LoadCharacters) }
+                    )
                 }
                 pagedCharacters.loadState.refresh is LoadState.Error -> {
                     val error = pagedCharacters.loadState.refresh as LoadState.Error
