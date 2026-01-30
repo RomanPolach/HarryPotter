@@ -172,7 +172,7 @@ fun CharacterDetailScreen(
             state.character != null -> {
                 CharacterDetailContent(
                     character = state.character!!,
-                    modifier = Modifier.padding(paddingValues)
+                    scaffoldPadding = paddingValues
                 )
             }
         }
@@ -183,20 +183,27 @@ fun CharacterDetailScreen(
 @Composable
 private fun CharacterDetailContent(
     character: Character,
-    modifier: Modifier = Modifier
+    scaffoldPadding: androidx.compose.foundation.layout.PaddingValues
 ) {
     val houseColor = getHouseColor(character.house)
     
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
+            .padding(bottom = scaffoldPadding.calculateBottomPadding())
             .verticalScroll(rememberScrollState())
     ) {
         // Hero image section
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(3f / 4f)
+                .then(
+                    if (character.imageUrl.isNotBlank()) {
+                        Modifier.aspectRatio(3f / 4f)
+                    } else {
+                        Modifier.padding(bottom = 48.dp)
+                    }
+                )
                 .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(
@@ -208,30 +215,37 @@ private fun CharacterDetailContent(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            if (character.imageUrl.isNotBlank()) {
-                AsyncImage(
-                    model = character.imageUrl,
-                    contentDescription = character.name,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(32.dp)
-                        .clip(RoundedCornerShape(24.dp)),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(240.dp)
-                        .clip(CircleShape)
-                        .background(houseColor.copy(alpha = 0.3f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.icon_sorcer),
-                        contentDescription = null,
-                        modifier = Modifier.size(140.dp),
-                        tint = houseColor
+            Box(
+                modifier = Modifier
+                    .padding(top = scaffoldPadding.calculateTopPadding())
+                    .fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                if (character.imageUrl.isNotBlank()) {
+                    AsyncImage(
+                        model = character.imageUrl,
+                        contentDescription = character.name,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp)
+                            .clip(RoundedCornerShape(24.dp)),
+                        contentScale = ContentScale.Crop
                     )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(160.dp)
+                            .clip(CircleShape)
+                            .background(houseColor.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.icon_sorcer),
+                            contentDescription = null,
+                            modifier = Modifier.size(90.dp),
+                            tint = houseColor
+                        )
+                    }
                 }
             }
         }
