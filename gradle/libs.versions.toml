@@ -1,22 +1,21 @@
 [versions]
 agp = "8.13.2"
-kotlin = "2.0.21"
-ksp = "2.0.21-1.0.25"
+kotlin = "2.3.0"
+ksp = "2.3.4"
 coreKtx = "1.17.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
-lifecycleRuntimeKtx = "2.8.7"
-activityCompose = "1.12.2"
-composeBom = "2024.09.00"
-room = "2.6.1"
-koin = "4.0.0"
-ktor = "3.0.2"
+lifecycleRuntimeKtx = "2.10.0"
+activityCompose = "1.12.3"
+composeBom = "2026.01.01"
+room = "2.8.4"
+koin = "4.1.1"
+ktor = "3.4.0"
 coil = "2.7.0"
-kotlinxSerialization = "1.7.3"
-navigation3 = "1.0.0-alpha01"
-navigation3Runtime = "1.0.0"
-paging = "3.3.5"
+kotlinxSerialization = "1.10.0"
+navigation3 = "1.0.0"
+paging = "3.4.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -63,7 +62,6 @@ ktor-client-logging = { group = "io.ktor", name = "ktor-client-logging", version
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
-androidx-navigation3-runtime = { group = "androidx.navigation3", name = "navigation3-runtime", version.ref = "navigation3Runtime" }
 
 # Paging
 paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.ref = "paging" }
